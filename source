@@ -1,0 +1,418 @@
+import pygame
+import math
+import random
+
+pygame.init()
+# initializing the font
+font = pygame.font.SysFont('calibri', 20)
+
+# useful variable
+pi = math.pi
+
+# display resolution, right is used for UI
+UI = 402
+resX = 600
+resY = 600
+
+radius = 1  # radius of each dot
+rnge = 1000  # range that the data takes (sharpness basically)
+dSize = 5000  # number of dots
+data = []  # this is where the data (position of each point) are stored
+centroids = []  # this is where the positions of the centroids are stored
+noK = 1  # number of centroids
+centDist = []  # this is where the distance of each point to each centroid is stored
+for i in range(dSize):
+    centDist.append([])
+
+centBel = []  # this is where 'which centroid does each point belong to' is stored
+familySize = []  # this is where the number of points belonging to a centroid is stored
+for i in range(noK):
+    familySize.append(0)
+
+colors = []  # this is where colors are stored
+trails = True  # trails on/off
+centHist = []  # keeps track of the history of the centroids for trails
+for x in range(noK):
+    centHist.append([])
+steps = 0  # number of steps
+stepsT = 0  # number of steps in this trail
+drawMode = 0  # mouse mode
+Rad = 15  # brush radius
+brushDen = 5  # brush density
+drawing = False
+erasing = False
+mouseDist = []  # distance of centroids to mouse
+
+
+# distance function
+def distance(a, m):
+    return math.sqrt((a[0] - m[0]) ** 2 + (a[1] - m[1]) ** 2)
+
+
+# add the values of lists with 2 elements
+def addL(z, y):
+    return [z[0] + y[0], z[1] + y[1]]
+
+
+# generates random colors
+def genRandColors(k, clrs):
+    for z in range(k):
+        clrs.append((random.randrange(255), random.randrange(255), random.randrange(255)))
+
+
+# generates random data
+def genRandData(datasize, rng, dta):
+    for y in range(datasize):
+        dta.append([resX * (random.randrange(rng) / rng), resY * (random.randrange(rng) / rng)])
+
+
+# initializes the centroids to random points
+def initkMeans(dta, k, cen, datasize):
+    for m in range(k):
+        idx = random.randrange(datasize)
+        cen.append(dta[idx])
+
+
+# Assigns the distances from each point to every centroid and then assigns belonging
+def kMeansAssignCentroids(dta, k, cen, cD, cB, dS):
+    for z in range(dS):
+        for y in range(k):
+            cD[z].append(distance(cen[y], dta[z]))
+    for z in cD:
+        cB.append(z.index(min(z)))
+
+
+# updates the position of each centroid to the average of their family
+
+def kMeansUpdateCentroids(dta, k, cen, cB, dS, fS):
+    for n, h in enumerate(cen):
+        hold = (h[0], h[1])
+        centHist[n].append(hold)
+    sumhold = []
+    dataconv = []
+    for c in dta:
+        dataconv.append([c[0] - resX / 2, c[1] - resY / 2])
+    for h in range(k):
+        sumhold.append([0, 0])
+    # counting the number of points belonging to each centroid
+    for h in cB:
+        fS[h] += 1
+    for h in range(dS):
+        sumhold[cB[h]] = addL(sumhold[cB[h]], dataconv[h])
+    for h in range(k):
+        if not fS[h] == 0:
+            cen[h] = [sumhold[h][0] / fS[h] + resX / 2, sumhold[h][1] / fS[h] + resY / 2]
+
+
+genRandColors(noK, colors)
+genRandData(dSize, rnge, data)
+initkMeans(data, noK, centroids, dSize)
+kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+# initialize surface and start the main loop
+surface = pygame.display.set_mode((resX + UI, resY))
+running = True
+while running:
+    mouse = pygame.mouse.get_pos()
+    if drawing:
+        steps = 0
+        for x in range(brushDen):
+            randAng = (2 * pi) * (random.randrange(50) / 50)
+            randRad = random.randrange(Rad)
+            data.append([mouse[0] + randRad * math.cos(randAng), mouse[1] + randRad * math.sin(randAng)])
+            dSize += 1
+        centDist = []
+        for i in range(dSize):
+            centDist.append([])
+        centBel = []
+        familySize = []
+        for i in range(noK):
+            familySize.append(0)
+        kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+    if erasing:
+        steps = 0
+        for p in data:
+            if distance(p, mouse) < Rad:
+                data.pop(data.index(p))
+                dSize -= 1
+        centDist = []
+        for i in range(dSize):
+            centDist.append([])
+        centBel = []
+        familySize = []
+        for i in range(noK):
+            familySize.append(0)
+        kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if not drawMode:
+                if event.button == 1:
+                    steps = 0
+                    noK += 1
+                    centroids.append(mouse)
+                    familySize.append(0)
+                    colors.append((random.randrange(255), random.randrange(255), random.randrange(255)))
+                    centDist = []
+                    for x in range(dSize):
+                        centDist.append([])
+                    centBel = []
+                    centHist = []
+                    for x in range(noK):
+                        centHist.append([])
+                    kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+                if event.button == 3 and noK > 1:
+                    steps = 0
+                    mouseDist = []
+                    for p in centroids:
+                        mouseDist.append(distance(p, mouse))
+                    minDist = min(mouseDist)
+                    closest = mouseDist.index(minDist)
+                    noK -= 1
+                    centroids.pop(closest)
+                    familySize.pop(closest)
+                    colors.pop(closest)
+                    centDist = []
+                    centHist = [[]]
+                    for x in range(noK):
+                        centHist.append([])
+                    for x in range(dSize):
+                        centDist.append([])
+                    centBel = []
+                    kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+            if drawMode:
+                steps = 0
+                if event.button == 1:
+                    drawing = True
+                if event.button == 3:
+                    erasing = True
+        if event.type == pygame.MOUSEBUTTONUP:
+            drawing = False
+            erasing = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_g:  # generate random data
+                data = []
+                colors = []
+                centroids = []
+                centHist = []
+                for x in range(noK):
+                    centHist.append([])
+                centDist = []
+                steps = 0
+                stepsT = 0
+                for x in range(dSize):
+                    centDist.append([])
+                centBel = []
+                genRandColors(noK, colors)
+                genRandData(dSize, rnge, data)
+                initkMeans(data, noK, centroids, dSize)
+                kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+            if event.key == pygame.K_s:  # take step with k means
+                kMeansUpdateCentroids(data, noK, centroids, centBel, dSize, familySize)
+                centDist = []
+                steps += 1
+                stepsT += 1
+                for i in range(dSize):
+                    centDist.append([])
+                centBel = []
+                familySize = []
+                for i in range(noK):
+                    familySize.append(0)
+                kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+            if event.key == pygame.K_q and dSize > 0:  # increase number of clusters
+                steps = 0
+                noK += 1
+                ind = random.randrange(dSize)
+                centroids.append(data[ind])
+                familySize.append(0)
+                colors.append((random.randrange(255), random.randrange(255), random.randrange(255)))
+                centDist = []
+                for x in range(dSize):
+                    centDist.append([])
+                centBel = []
+                centHist = []
+                for x in range(noK):
+                    centHist.append([])
+                kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+            if event.key == pygame.K_a and noK > 1:  # decrease number of clusters
+                steps = 0
+                noK -= 1
+                centroids.pop(-1)
+                familySize.pop(-1)
+                colors.pop(-1)
+                centDist = []
+                centHist = [[]]
+                for x in range(noK):
+                    centHist.append([])
+                for x in range(dSize):
+                    centDist.append([])
+                centBel = []
+                kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+            if event.key == pygame.K_t:  # toggle trails
+                if trails:
+                    trails = False
+                    centHist = [[]]
+                    for x in range(noK):
+                        centHist.append([])
+                else:
+                    trails = True
+            if event.key == pygame.K_x:  # toggle draw mode
+                if drawMode < 1:
+                    drawMode += 1
+                else:
+                    drawMode = 0
+            if event.key == pygame.K_c:  # change the color of the nearest centroid or clear the data lol
+                if drawMode:
+                    steps = 0
+                    stepsT = 0
+                    dSize = 0
+                    noK = 1
+                    data = []
+                    colors = [(255, 255, 255)]
+                    centroids = [[0, 0]]
+                    centHist = []
+                    for x in range(noK):
+                        centHist.append([])
+                    centDist = []
+                    steps = 0
+                    stepsT = 0
+                    for x in range(dSize):
+                        centDist.append([])
+                    centBel = []
+                else:
+                    mouseDist = []
+                    for p in centroids:
+                        mouseDist.append(distance(p, mouse))
+                    minDist = min(mouseDist)
+                    closest = mouseDist.index(minDist)
+                    colors[closest] = (random.randrange(255), random.randrange(255), random.randrange(255))
+            if drawMode:
+                if event.key == pygame.K_e:
+                    Rad += 2
+                if event.key == pygame.K_d and Rad > 3:
+                    Rad -= 2
+                if event.key == pygame.K_r:
+                    brushDen += 2
+                if event.key == pygame.K_f and brushDen > 3:
+                    brushDen -= 2
+            if event.key == pygame.K_w: # randomly assign centroids
+                centroids = []
+                centHist = []
+                for x in range(noK):
+                    centHist.append([])
+                centDist = []
+                steps = 0
+                stepsT = 0
+                for x in range(dSize):
+                    centDist.append([])
+                centBel = []
+                initkMeans(data, noK, centroids, dSize)
+                kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
+
+    surface.fill((0, 0, 0))
+
+    for i in range(dSize):
+        try:
+            pygame.draw.circle(surface, colors[centBel[i]], data[i], radius)
+        except IndexError:
+            break
+
+    if trails:
+        noLines = 0
+        for i, v in enumerate(centHist):
+            for b in range(len(v) - 1):
+                pygame.draw.line(surface, (255, 255, 255), v[b], v[b + 1], 2)
+            try:
+                pygame.draw.line(surface, (255, 255, 255), v[-1], centroids[i], 2)
+            except IndexError:
+                break
+
+    if dSize > 0:
+        for i in range(noK):
+            try:
+                pygame.draw.rect(surface, colors[i], (centroids[i][0] - 5, centroids[i][1] - 5, 10, 10))
+                pygame.draw.rect(surface, (255, 255, 255), (centroids[i][0] - 5, centroids[i][1] - 5, 10, 10), width=1)
+            except IndexError:
+                break
+
+    mouseDist = []
+    if not drawMode:
+        for p in centroids:
+            mouseDist.append(distance(p, mouse))
+        minDist = min(mouseDist)
+        closest = mouseDist.index(minDist)
+        pygame.draw.circle(surface, (255, 255, 255), centroids[closest], 15, width=3)
+    if drawMode:
+        for p in data:
+            if distance(p, mouse) < Rad:
+                pygame.draw.circle(surface, (255, 255, 255), p, radius)
+        pygame.draw.circle(surface, (255, 255, 255), mouse, Rad, width=1)
+
+    pygame.draw.line(surface, (255, 255, 255), (resX, 0), (resX, resY), 2)
+
+    text = font.render("G to generate random data.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 10))
+    text = font.render("S to take a step of k-means.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 35))
+    text = font.render("Q to randomly add another cluster.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 60))
+    text = font.render("A to delete most recent cluster.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 85))
+    text = font.render("T to toggle trails.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 110))
+    text = font.render("X to toggle draw mode.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 135))
+    if not drawMode:
+        text = font.render("Centroid Mode", True, (155, 255, 155))
+        surface.blit(text, (resX + 10, 160))
+        text = font.render("Left click to add a cluster.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 185))
+        text = font.render("Right click to remove nearest cluster.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 210))
+        text = font.render("C to change the color of the nearest centroid.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 235))
+    if drawMode:
+        text = font.render("Draw Mode", True, (155, 255, 155))
+        surface.blit(text, (resX + 10, 160))
+        text = font.render("Left click to draw data.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 185))
+        text = font.render("Right click to remove data.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 210))
+        text = font.render("C to clear all data.", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, 235))
+    text = font.render("E/D to increase/decrease brush size.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 260))
+
+    text = font.render("R/F to increase/decrease brush density.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 285))
+    text = font.render("W to randomly assign centroids.", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, 310))
+
+    text = font.render(f"Number of clusters : {noK}", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 25))
+    if trails:
+        text = font.render("Trails : on", True, (255, 255, 255))
+    else:
+        text = font.render("Trails : off", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 50))
+    if drawMode:
+        text = font.render(f"Draw mode : on", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, resY - 75))
+    else:
+        text = font.render(f"Draw mode : off", True, (255, 255, 255))
+        surface.blit(text, (resX + 10, resY - 75))
+    text = font.render(f"Brush size : {Rad} | Brush density : {brushDen}", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 100))
+    text = font.render(f"Steps in total : {stepsT}", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 125))
+    text = font.render(f"Steps in this iteration : {steps}", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 150))
+    text = font.render(f"Number of points : {dSize}", True, (255, 255, 255))
+    surface.blit(text, (resX + 10, resY - 175))
+    pygame.display.flip()
