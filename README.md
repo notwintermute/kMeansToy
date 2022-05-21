@@ -1,6 +1,6 @@
 # kMeansToy
-Toy that visualizes the kMeans algorithm  
-----------------------------------------  
+Visualize and play with the kMeans algorithm.  
+This program uses the pygame library.  
 Controls:  
 G to generate random data.  
 W to randomly assign centroids.  
@@ -21,5 +21,3 @@ R/F to increase/decrease brush density.
 Left click to draw points.  
 Right click to delete points.  
 C to clear the data.  
------------------------------------------
-This program uses the pygame library.
