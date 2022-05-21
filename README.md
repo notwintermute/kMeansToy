@@ -1,6 +1,5 @@
 # kMeansToy
 Toy that visualizes the kMeans algorithm
-Uses pygame library
 ----------------------------------------
 Controls:
 G to generate random data.
@@ -23,3 +22,5 @@ R/F to increase/decrease brush density.
 Left click to draw points.
 Right click to delete points. 
 C to clear the data.
+-----------------------------------------
+This program uses the pygame library.
