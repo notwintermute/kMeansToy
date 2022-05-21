@@ -1,5 +1,6 @@
 # kMeansToy
 Toy that visualizes the kMeans algorithm
+Uses pygame library
 ----------------------------------------
 Controls:
 G to generate random data.
