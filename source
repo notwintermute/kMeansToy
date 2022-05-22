@@ -371,63 +371,45 @@ while running:
 
     t = 10  # distance of text from top
     s = 25  # separation between text (the variable makes it easier on me)
-    text = font.render("G to generate random data.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t))
-    text = font.render("S to take a step of k-means.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+s))
-    text = font.render("Q to randomly add another cluster.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+2*s))
-    text = font.render("A to delete most recent cluster.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+3*s))
-    text = font.render("W to randomly assign centroids.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+4*s))
-    text = font.render("T to toggle trails.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+5*s))
-    text = font.render("X to toggle draw mode.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+6*s))
-    if not drawMode:
-        text = font.render("Centroid Mode", True, (155, 255, 155))
-        surface.blit(text, (resX + 10, t+7*s))
-        text = font.render("Left click to add a cluster.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+8*s))
-        text = font.render("Right click to remove nearest cluster.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+9*s))
-        text = font.render("C to change the color of the nearest centroid.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+10*s))
-    if drawMode:
-        text = font.render("Draw Mode", True, (155, 255, 155))
-        surface.blit(text, (resX + 10, t+7*s))
-        text = font.render("Left click to draw data.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+8*s))
-        text = font.render("Right click to remove data.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+9*s))
-        text = font.render("C to clear all data.", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, t+10*s))
-    text = font.render("E/D to increase/decrease brush size.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+11*s))
+    UItext = [
+             ["G to generate random data.",
+              "S to take a step of k-means.",
+              "Q to randomly add another cluster.",
+              "A to delete most recent cluster.",
+              "W to randomly assign centroids.",
+              "T to toggle trails.",
+              "X to toggle draw mode."],
+             ["Draw Mode",
+              "Left click to draw data.",
+              "Right click to remove data.",
+              "C to clear all data.",
+              "E/D to increase/decrease brush size.",
+              "R/F to increase/decrease brush density."] if drawMode else
+              ["Centroid Mode",
+               "Left click to add a cluster.",
+               "Right click to remove nearest cluster.",
+               "C to change the color of the nearest centroid."]
+              ]
 
-    text = font.render("R/F to increase/decrease brush density.", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, t+12*s))
+    statusText = ["Trails : on" if trails else "Trails : off",
+                  "Draw mode : on" if drawMode else "Draw mode : off",
+                  f"Brush size : {Rad} | Brush density : {brushDen}",
+                  f"Steps in total : {stepsT}",
+                  f"Steps in this iteration : {steps}",
+                  f"Number of points : {dSize}",
+                  f"Number of clusters : {noK}"]
 
-    if trails:
-        text = font.render("Trails : on", True, (255, 255, 255))
-    else:
-        text = font.render("Trails : off", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - s))
-    if drawMode:
-        text = font.render(f"Draw mode : on", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, resY - 2*s))
-    else:
-        text = font.render(f"Draw mode : off", True, (255, 255, 255))
-        surface.blit(text, (resX + 10, resY - 2*s))
-    text = font.render(f"Brush size : {Rad} | Brush density : {brushDen}", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - 3*s))
-    text = font.render(f"Steps in total : {stepsT}", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - 4*s))
-    text = font.render(f"Steps in this iteration : {steps}", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - 5*s))
-    text = font.render(f"Number of points : {dSize}", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - 6*s))
-    text = font.render(f"Number of clusters : {noK}", True, (255, 255, 255))
-    surface.blit(text, (resX + 10, resY - 7*s))
+    count = 0
+    for box in UItext:
+        for lines in box:
+            text = font.render(lines, True, (255,255,255))
+            surface.blit(text, (resX + 10, t+s*count))
+            count += 1
+
+    count = 0
+    for lines in statusText:
+        text = font.render(lines, True, (255, 255, 255))
+        surface.blit(text, (resX + 10, resY-s*count))
+        count += 1
+
     pygame.display.flip()
