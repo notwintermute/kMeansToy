@@ -1,23 +1,25 @@
 # kMeansToy
 Visualize and play with the kMeans algorithm.  
 This program uses the pygame library.  
-Controls:  
+  
+Controls:
+-------------
 G to generate random data.  
-W to randomly assign centroids.  
 S to take a step of k-means.  
 Q to randomly add another cluster.  
-A to delete the most recently added cluster.  
+A to delete most recent cluster.  
+W to randomly assign centroids.  
 T to toggle trails.  
-X to toggle draw mode.  
+X to toggle Centroid / Draw modes.  
   
-If draw mode is off (default):  
+Centroid Mode (default):  
 Left click to add a centroid at your cursor.  
 Right click to remove nearest centroid (highlighted by a white circle).  
 C to change the color of the nearest centroid.  
   
-If draw mode is on:  
-E/D to increase/decrease brush size.  
-R/F to increase/decrease brush density.  
+Draw Mode:  
 Left click to draw points.  
 Right click to delete points.  
 C to clear the data.  
+E/D to increase/decrease brush size.  
+R/F to increase/decrease brush density.
