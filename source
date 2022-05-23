@@ -1,3 +1,4 @@
+
 import pygame
 import math
 import random
@@ -8,7 +9,6 @@ font = pygame.font.SysFont('calibri', 20)
 
 # useful variable
 pi = math.pi
-
 # display resolution, right is used for UI
 UI = 402
 squareRes = 700
@@ -18,6 +18,7 @@ resY = squareRes
 radius = 1  # radius of each dot
 rnge = 1000  # range that the data takes (sharpness basically)
 dSize = 5000  # number of dots
+oSize = dSize  # this is necessary if you clear the data and then want to generate new random data
 data = []  # this is where the data (position of each point) are stored
 centroids = []  # this is where the positions of the centroids are stored
 noK = 1  # number of centroids
@@ -93,10 +94,13 @@ def kMeansAssignCentroids(dta, k, cen, cD, cB, dS):
     for z in range(dS):
         for y in range(k):
             cD[z].append(distance(cen[y], dta[z]))
-
     # finds the which centroid the minimum distance belongs to, the nth element in cB is the number of the centroid
+
     for z in cD:
-        cB.append(z.index(min(z)))  #
+        try:
+            cB.append(z.index(min(z)))  # the nth element in cB is which centroid the nth data point belongs to
+        except ValueError:
+            break
 
 
 # updates the position of each centroid to the average of their family
@@ -142,7 +146,7 @@ while running:
     mouse = pygame.mouse.get_pos()
 
     # drawing and erasing data come first because executing the processing and rendering of data comes after this code
-    if drawing:  # code that handles the drawing in draw mode
+    if drawing and mouse[0] + Rad < resX:  # code that handles the drawing in draw mode
         steps = 0
         for x in range(brushDen):
             # picks a random angle and radius around the mouse cursor and then puts a data point there
@@ -182,8 +186,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
-        if event.type == pygame.MOUSEBUTTONDOWN:  # mouse click actions
+            break
+        # ------------------------------------ mouse click actions ------------------------------------
+        if event.type == pygame.MOUSEBUTTONDOWN and mouse[0] < resX:  
 
             if not drawMode:  # centroid mode click actions
                 if event.button == 1:  # left click add centroid
@@ -230,9 +235,10 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP:  # releasing the hold
             drawing = False
             erasing = False
-
+        # ------------------------------------ key press actions ------------------------------------
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_g:  # generate random data
+                dSize = oSize
                 data = []
                 colors = []
                 centroids = []
@@ -250,7 +256,7 @@ while running:
                 initkMeans(data, noK, centroids, dSize)
                 kMeansAssignCentroids(data, noK, centroids, centDist, centBel, dSize)
 
-            if event.key == pygame.K_s:  # take step of k means
+            if event.key == pygame.K_s and dSize and noK:  # take step of k means
                 kMeansUpdateCentroids(data, noK, centroids, centBel, dSize, familySize)
                 centDist = []
                 steps += 1
@@ -314,10 +320,10 @@ while running:
                     steps = 0
                     stepsT = 0
                     dSize = 0
-                    noK = 1
+                    noK = 0
                     data = []
-                    colors = [(255, 255, 255)]
-                    centroids = [[0, 0]]
+                    colors = []
+                    centroids = []
                     centHist = []
                     for x in range(noK):
                         centHist.append([])
@@ -367,7 +373,7 @@ while running:
         try:
             pygame.draw.circle(surface, colors[centBel[i]], data[i], radius)
         except IndexError:
-            break
+            pygame.draw.circle(surface, (255, 255, 255), data[i], radius)
 
     # this displays trails
     if trails:
@@ -391,12 +397,15 @@ while running:
 
     # this highlights the closest centroid
     mouseDist = []
-    if not drawMode:
+    if mouse[0] < resX:
         for p in centroids:
             mouseDist.append(distance(p, mouse))
-        minDist = min(mouseDist)
-        closest = mouseDist.index(minDist)
-        pygame.draw.circle(surface, (255, 255, 255), centroids[closest], 15, width=3)
+        try:
+            minDist = min(mouseDist)
+            closest = mouseDist.index(minDist)
+            pygame.draw.circle(surface, (255, 255, 255), centroids[closest], 15, width=3)
+        except ValueError:
+            pass
 
     # this displays the circle around the cursor
     if drawMode:
@@ -405,7 +414,7 @@ while running:
                 pygame.draw.circle(surface, (255, 255, 255), p, radius)
         pygame.draw.circle(surface, (255, 255, 255), mouse, Rad, width=1)
 
-    # this displays the white line that divdes points from the UI
+    # this displays the white line that divides points from the UI
     pygame.draw.line(surface, (255, 255, 255), (resX, 0), (resX, resY), 2)
 
     T = 10  # distance of text from top
@@ -436,7 +445,7 @@ while running:
 
     # text that tells you about the status of the program
     statusText = ["Trails : " + ("on" if trails else "off"),
-                  "Draw mode : "+ ("on" if drawMode else "off"),
+                  "Draw mode : " + ("on" if drawMode else "off"),
                   f"Brush size : {Rad} | Brush density : {brushDen}",
                   f"Steps in total : {stepsT}",
                   f"Steps in this iteration : {steps}",
