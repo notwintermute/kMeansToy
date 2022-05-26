@@ -5,6 +5,7 @@ This program uses the pygame library.
 Controls:
 -------------
 G to generate random data.  
+D to change random data type.  
 S to take a step of k-means.  
 Q to randomly add another cluster.  
 A to delete most recent cluster.  
