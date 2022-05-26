@@ -10,7 +10,7 @@ font = pygame.font.SysFont('calibri', 20)
 pi = math.pi
 # display resolution, right is used for UI
 UI = 402
-squareRes = 900
+squareRes = 600
 resX = squareRes
 resY = squareRes
 
