@@ -6,13 +6,14 @@ pygame.init()
 # initializing the font
 font = pygame.font.SysFont('calibri', 20)
 
-# useful variable
+# pi for later
 pi = math.pi
-# display resolution, right is used for UI
-UI = 402
+
+# display resolution, right side is used for UI
 squareRes = 600
-resX = squareRes
-resY = squareRes
+UI = 402
+resX = squareRes # setting the x and y to the same
+resY = squareRes # value to get a square display
 
 radius = 1  # radius of each dot
 rnge = 1000  # range that the data takes (sharpness basically)
@@ -26,14 +27,14 @@ centDist = []  # this is where the distance of each point to each centroid is st
 for i in range(dSize):
     centDist.append([])
 
-centBel = []  # this is where 'which centroid does each point belong to' is stored
+centBel = []  # this is where the centroid closest to a point is stored
 familySize = []  # this is where the number of points belonging to a centroid is stored
 for i in range(noK):
     familySize.append(0)
 
 colors = []  # this is where colors are stored
 minB = 80  # minimum brightness for colors
-trails = True  # trails on/off
+trails = True  # whether you display a trail between every update
 centHist = []  # keeps track of the history of the centroids for trails
 for x in range(noK):
     centHist.append([])
